@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Chart Preview</title>
+</head>
+<body>
+
+    <div id="rc-snippet-container" style="background-color: #efefef; padding: 20px; border-radius: 10px; font-family: sans-serif; max-width: 550px; margin: 30px auto;">
+
+        <h2 style="color: #1a3a4a; margin-top: 0; font-size: 22px;">Programme</h2>
+
+        <!-- Radar chart: all values & colours configured here in the HTML.
+             Rendering is done by the external script. -->
+        <div class="patrik-radar-chart"
+             data-axes="LIGHTWIND,FREERIDE,FOIL,FREEFLY,WAVE,SURF,RACING,FREESTYLE"
+             data-values="100,90,70,85,95,60,80,75">
+        </div>
+
+    </div>
+
+    <!-- External rendering script (shared across pages) -->
+    <script src="patrik-components.js"></script>
+
+</body>
+</html>

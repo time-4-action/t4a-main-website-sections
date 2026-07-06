@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Patrik Components — Guide</title>
+<style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; }
+    body{
+        font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+        color: #1a3a4a;
+        line-height: 1.5;
+        font-size: 13px;
+        margin: 0;
+    }
+    h1{ font-size: 30px; margin: 0 0 4px; }
+    h2{
+        font-size: 19px; margin: 26px 0 8px;
+        border-bottom: 2px solid #b4ff64; padding-bottom: 4px;
+    }
+    h3{ font-size: 15px; margin: 18px 0 6px; }
+    p{ margin: 6px 0; }
+    .lead{ color:#4a6472; font-size: 14px; margin-bottom: 4px; }
+    code{
+        font-family: "Consolas","Courier New",monospace;
+        background:#eef3f5; padding:1px 5px; border-radius:4px; font-size: 12px;
+        color:#1a3a4a;
+    }
+    pre{
+        background:#1a3a4a; color:#e8f0f3;
+        padding:12px 14px; border-radius:8px; overflow:auto;
+        font-family:"Consolas","Courier New",monospace; font-size:11.5px; line-height:1.45;
+        white-space: pre-wrap; word-break: break-word;
+    }
+    pre .tag{ color:#b4ff64; }
+    pre .attr{ color:#9ec8ff; }
+    pre .val{ color:#ffd166; }
+    pre .cmt{ color:#7a93a0; font-style:italic; }
+    table{ border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 12px; }
+    th,td{ border:1px solid #cddae0; padding:6px 8px; text-align:left; vertical-align:top; }
+    th{ background:#eef3f5; }
+    td code{ background:#eef3f5; }
+    .pill{
+        display:inline-block; background:#b4ff64; color:#1a3a4a;
+        font-weight:700; font-size:11px; padding:2px 9px; border-radius:20px;
+    }
+    .note{
+        background:#f4faec; border-left:4px solid #b4ff64;
+        padding:8px 12px; border-radius:4px; margin:10px 0; font-size:12px;
+    }
+    .files li{ margin:3px 0; }
+    footer{ margin-top:30px; font-size:10px; color:#8aa1ab; border-top:1px solid #dde6ea; padding-top:8px; }
+    .page-break{ page-break-before: always; }
+    figure{ margin:12px 0 14px; }
+    figure img{
+        width:100%; max-width:460px; display:block;
+        border:1px solid #cddae0; border-radius:8px;
+    }
+    figcaption{ font-size:11px; color:#6b8290; margin-top:5px; }
+    .avoid-break{ page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<h1>Patrik Components</h1>
+<p class="lead">Scriptless HTML chart &amp; range-bar components — one shared rendering script.</p>
+<p><span class="pill">patrik-components.js</span></p>
+
+<p>Every page contains <strong>only markup and <code>data-*</code> configuration</strong>. All rendering
+logic and styling live in a single external file. To use the components on any page, drop in the
+relevant HTML block and load the script once:</p>
+
+<pre><span class="cmt">&lt;!-- once per page, near the end of &lt;body&gt; --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"patrik-components.js"</span><span class="tag">&gt;&lt;/script&gt;</span></pre>
+
+<div class="note">
+The script auto-renders on page load. It finds every <code>.patrik-radar-chart</code> and
+<code>.patrik-range-bar</code> element and builds them from their attributes. No inline JavaScript needed.
+</div>
+
+<h2>1 &nbsp; Radar chart <span style="font-weight:400;font-size:13px;color:#4a6472;">(performance octagon)</span></h2>
+
+<h3>Single dataset</h3>
+<pre><span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"patrik-radar-chart"</span>
+     <span class="attr">data-axes</span>=<span class="val">"LIGHTWIND,FREERIDE,FOIL,FREEFLY,WAVE,SURF,RACING,FREESTYLE"</span>
+     <span class="attr">data-values</span>=<span class="val">"100,90,70,85,95,60,80,75"</span><span class="tag">&gt;&lt;/div&gt;</span></pre>
+
+<p><code>data-values</code> map to <code>data-axes</code> <strong>by position</strong>. Values are 0–100.
+Add or remove axes freely — the octagon adapts to any number of axes.</p>
+
+<figure class="avoid-break">
+    <img src="shot-chart.png" alt="Rendered radar chart">
+    <figcaption>Result of <code>chart.html</code> — the single-dataset example above.</figcaption>
+</figure>
+
+<h3>Switchable datasets (dropdown)</h3>
+<p>Put a <code>&lt;select class="patrik-radar-select"&gt;</code> inside the chart. Each option's
+<code>value</code> is the comma list of values (same order as <code>data-axes</code>). The script wires up
+switching automatically.</p>
+<pre><span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"patrik-radar-chart"</span> <span class="attr">data-axes</span>=<span class="val">"Lowend,Directness,Riding,Jumping"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;select</span> <span class="attr">class</span>=<span class="val">"patrik-radar-select"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"100,70,100,90"</span><span class="tag">&gt;</span>4Wave FLOW HD<span class="tag">&lt;/option&gt;</span>
+    <span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"90,95,90,100"</span><span class="tag">&gt;</span>4Wave FLASH HD<span class="tag">&lt;/option&gt;</span>
+  <span class="tag">&lt;/select&gt;</span>
+<span class="tag">&lt;/div&gt;</span></pre>
+
+<figure class="avoid-break">
+    <img src="shot-selector.png" alt="Rendered radar chart with model selector">
+    <figcaption>Result of <code>chart-selector.html</code> — pick a model from the dropdown to switch datasets.</figcaption>
+</figure>
+
+<h3>Radar attributes</h3>
+<table>
+    <tr><th>Attribute</th><th>Required</th><th>Description</th></tr>
+    <tr><td><code>data-axes</code></td><td>yes</td><td>Comma list of axis labels.</td></tr>
+    <tr><td><code>data-values</code></td><td>yes*</td><td>Comma list of values 0–100 (*for single-dataset mode).</td></tr>
+    <tr><td><code>&lt;select.patrik-radar-select&gt;</code></td><td>yes*</td><td>Use instead of <code>data-values</code> for a switchable chart.</td></tr>
+    <tr><td><code>data-fill</code></td><td>no</td><td>Polygon fill colour.</td></tr>
+    <tr><td><code>data-stroke</code></td><td>no</td><td>Polygon outline colour.</td></tr>
+    <tr><td><code>data-point</code></td><td>no</td><td>Data-point dot colour.</td></tr>
+    <tr><td><code>data-grid</code></td><td>no</td><td>Grid line colour.</td></tr>
+    <tr><td><code>data-axis-color</code></td><td>no</td><td>Axis (spoke) line colour.</td></tr>
+    <tr><td><code>data-label-color</code></td><td>no</td><td>Axis label text colour.</td></tr>
+</table>
+
+<h2 class="page-break">2 &nbsp; Range bars <span style="font-weight:400;font-size:13px;color:#4a6472;">(feel / rider goals)</span></h2>
+
+<p>A range bar shows a <strong>band</strong> (a range, not a single value) between two poles, with a title above
+and configurable colours. Two modes:</p>
+
+<h3>Two-pole mode</h3>
+<p>A label at each end; the band highlights <code>data-min</code>→<code>data-max</code> as percentages (0–100).</p>
+<pre><span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"patrik-range-bar"</span>
+     <span class="attr">data-title</span>=<span class="val">"Power delivery"</span>
+     <span class="attr">data-left</span>=<span class="val">"Direct"</span> <span class="attr">data-right</span>=<span class="val">"Smooth"</span>
+     <span class="attr">data-min</span>=<span class="val">"25"</span> <span class="attr">data-max</span>=<span class="val">"62"</span><span class="tag">&gt;&lt;/div&gt;</span></pre>
+
+<h3>Scale mode</h3>
+<p>Evenly spaced stop labels beneath the bar. With <code>data-scale-index</code>, <code>data-min</code>/<code>data-max</code>
+are <strong>stop indexes</strong> (0-based) instead of percentages.</p>
+<pre><span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"patrik-range-bar"</span>
+     <span class="attr">data-title</span>=<span class="val">"Rider level"</span>
+     <span class="attr">data-scale</span>=<span class="val">"Entry,Intermediate,Advanced,Pro"</span>
+     <span class="attr">data-scale-index</span>=<span class="val">"true"</span>
+     <span class="attr">data-min</span>=<span class="val">"1"</span> <span class="attr">data-max</span>=<span class="val">"3"</span><span class="tag">&gt;&lt;/div&gt;</span>
+<span class="cmt">&lt;!-- band spans Intermediate → Pro --&gt;</span></pre>
+
+<figure class="avoid-break">
+    <img src="shot-rangebars.png" alt="Rendered range bars">
+    <figcaption>Result of <code>range-bars.html</code> — two-pole bars (Feel), scale bars with stops (Rider goals), and a custom-colour example (Comfort zone).</figcaption>
+</figure>
+
+<h3>Range-bar attributes</h3>
+<table>
+    <tr><th>Attribute</th><th>Description</th></tr>
+    <tr><td><code>data-title</code></td><td>Small uppercase title above the bar.</td></tr>
+    <tr><td><code>data-left</code> / <code>data-right</code></td><td>End-pole labels (two-pole mode).</td></tr>
+    <tr><td><code>data-scale</code></td><td>Comma list of evenly spaced stop labels (scale mode).</td></tr>
+    <tr><td><code>data-scale-index</code></td><td>Present ⇒ treat min/max as stop indexes, not percentages.</td></tr>
+    <tr><td><code>data-min</code> / <code>data-max</code></td><td>Start / end of the highlighted band.</td></tr>
+    <tr><td><code>data-value</code></td><td>Optional single marker line (0–100).</td></tr>
+    <tr><td><code>data-range</code></td><td>Band fill colour.</td></tr>
+    <tr><td><code>data-track</code></td><td>Track (background) colour.</td></tr>
+    <tr><td><code>data-text</code></td><td>Label text colour.</td></tr>
+    <tr><td><code>data-border</code></td><td>Track border colour.</td></tr>
+</table>
+
+<h2>3 &nbsp; Files</h2>
+<ul class="files">
+    <li><code>patrik-components.js</code> — the shared rendering script (the only script any page loads).</li>
+    <li><code>chart.html</code> — single radar chart example.</li>
+    <li><code>chart-selector.html</code> — radar chart with a model-comparison dropdown.</li>
+    <li><code>range-bars.html</code> — Feel &amp; Rider-goals range bars.</li>
+</ul>
+
+<h2>4 &nbsp; Notes</h2>
+<ul>
+    <li>Load <code>patrik-components.js</code> <strong>once</strong> per page, even with many component blocks.</li>
+    <li>All colours have sensible defaults (teal <code>#1a3a4a</code> + lime <code>#b4ff64</code>); only set <code>data-*</code> colours to override.</li>
+    <li>To re-render after changing the DOM dynamically, call <code>PatrikComponents.render()</code> in the console / your own code.</li>
+    <li>Colours accept any CSS colour: hex, <code>rgb()</code>, <code>rgba()</code>, named.</li>
+</ul>
+
+<footer>Patrik Components — internal usage guide. Generated from guide.html.</footer>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Chart Preview</title>
+</head>
+<body>
+
+    <div id="rc-snippet-container" style="background-color: #efefef; padding: 20px; border-radius: 10px; font-family: sans-serif; max-width: 550px; margin: 30px auto;">
+
+        <h2 style="color: #1a3a4a; margin-top: 0; margin-bottom: 15px; font-size: 22px;">Performance comparison WAVE</h2>
+
+        <!-- Radar chart with a model selector. Axes, datasets and colours are
+             all configured here in the HTML; the external script wires up the
+             dropdown and renders. Each <option value> lists the values in the
+             same order as data-axes. -->
+        <div class="patrik-radar-chart"
+             data-axes="Lowend,Highend Control,Directness,Forgivingness,Backhand Pull,Riding,Jumping,Lightness"
+             data-label-color="#393939"
+             data-fill="rgba(229,255,100,0.6)">
+
+            <div style="margin-bottom: 20px;">
+                <label for="rc-chart-selector" style="font-size: 13px; color: #1a3a4a; font-weight: bold; margin-right: 8px;">Compare models:</label>
+                <select id="rc-chart-selector" class="patrik-radar-select" style="padding: 6px 12px; font-size: 14px; border-radius: 5px; border: 1px solid #b0c4cf; color: #1a3a4a; background-color: #ffffff; font-family: sans-serif; font-weight: bold; cursor: pointer; outline: none;">
+                    <option value="100,85,70,100,40,100,90,100">4Wave FLOW HD</option>
+                    <option value="90,100,95,80,75,90,100,90">4Wave FLASH HD</option>
+                    <option value="95,100,100,85,80,85,85,85">5Wave FUEL HD</option>
+                </select>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- External rendering script (shared across pages) -->
+    <script src="patrik-components.js"></script>
+
+</body>
+</html>
