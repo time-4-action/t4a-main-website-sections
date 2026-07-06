@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrik Components — Section Builder</title>
+<link rel="stylesheet" href="builder/builder.css">
+<style>
+    .hero{
+        background:linear-gradient(135deg,#1a3a4a 0%,#25546b 100%);
+        color:#eef7ff; padding:52px 24px 60px; text-align:center;
+    }
+    .hero .kicker{
+        display:inline-block; background:var(--lime); color:var(--teal);
+        font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+        padding:5px 14px; border-radius:20px; margin-bottom:18px;
+    }
+    .hero h1{ font-size:38px; margin:0 0 12px; letter-spacing:-.01em; }
+    .hero h1 .lime{ color:var(--lime); }
+    .hero p{ font-size:16px; max-width:620px; margin:0 auto; color:#c8dde8; }
+
+    .wrap{ max-width:1080px; margin:-34px auto 60px; padding:0 24px; }
+
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+    @media (max-width:760px){ .grid{ grid-template-columns:1fr; } }
+
+    .card{
+        background:#fff; border:1px solid var(--line); border-radius:16px;
+        box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column;
+        transition:transform .15s, box-shadow .15s;
+    }
+    .card:hover{ transform:translateY(-3px); box-shadow:0 14px 34px rgba(26,58,74,.16); }
+    .card .thumb{
+        background:#eef2f4; padding:22px; border-bottom:1px solid var(--line);
+        display:flex; align-items:center; justify-content:center; min-height:190px;
+    }
+    .card .body{ padding:20px 22px 22px; display:flex; flex-direction:column; flex:1; }
+    .card h2{ font-size:19px; margin:0 0 6px; }
+    .card .desc{ color:var(--muted); font-size:14px; margin:0 0 18px; flex:1; }
+    .card .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+    .card .actions a{ text-decoration:none; }
+
+    .section-title{
+        font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+        color:var(--muted); margin:40px 0 16px;
+    }
+    .links{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+    .link{
+        display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--ink);
+        background:#fff; border:1px solid var(--line); border-radius:11px; padding:14px 16px;
+        transition:border-color .15s, background .15s;
+    }
+    .link:hover{ border-color:var(--teal-2); background:#f7fafb; }
+    .link .ic{
+        width:34px; height:34px; border-radius:9px; background:#eef7e0; color:var(--teal);
+        display:flex; align-items:center; justify-content:center; font-size:17px; flex:0 0 auto;
+    }
+    .link .t{ font-weight:700; font-size:14px; }
+    .link .s{ font-size:12px; color:var(--muted); }
+
+    footer.foot{ text-align:center; color:var(--muted); font-size:12.5px; padding:30px; }
+
+    /* thumbnail scaling */
+    .thumb .patrik-radar-svg{ max-width:200px; }
+    .thumb .rb-thumb{ width:100%; max-width:280px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+    <span class="kicker">Patrik Components</span>
+    <h1>Section <span class="lime">Builder</span></h1>
+    <p>Configure a component with a simple UI, watch the live preview, then copy the ready-to-paste HTML. All rendering runs on one shared script — <code style="color:#b4ff64;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;">patrik-components.js</code>.</p>
+</div>
+
+<div class="wrap">
+
+    <div class="grid">
+
+        <!-- Radar chart card -->
+        <div class="card">
+            <div class="thumb">
+                <div class="patrik-radar-chart"
+                     data-axes="LIGHTWIND,FREERIDE,FOIL,FREEFLY,WAVE,SURF,RACING,FREESTYLE"
+                     data-values="100,90,70,85,95,60,80,75"></div>
+            </div>
+            <div class="body">
+                <h2>Radar Chart</h2>
+                <p class="desc">The performance octagon. Plot one dataset, or add a dropdown to compare several models across any set of axes.</p>
+                <div class="actions">
+                    <a href="builder/radar-chart.html"><span class="btn primary">Open builder →</span></a>
+                    <a href="examples/chart.html"><span class="btn ghost">Example</span></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Range bars card -->
+        <div class="card">
+            <div class="thumb">
+                <div class="rb-thumb">
+                    <div class="patrik-range-bar" data-title="Power delivery"
+                         data-left="Direct" data-right="Smooth" data-min="25" data-max="62"></div>
+                    <div class="patrik-range-bar" data-title="Rider level" style="margin-bottom:0;"
+                         data-scale="Entry,Inter,Advanced,Pro" data-scale-index="true"
+                         data-min="1" data-max="3"></div>
+                </div>
+            </div>
+            <div class="body">
+                <h2>Range Bars</h2>
+                <p class="desc">Feel &amp; rider-goal sliders. Show a band between two poles, or across evenly spaced labelled stops, with an optional marker.</p>
+                <div class="actions">
+                    <a href="builder/range-bars.html"><span class="btn primary">Open builder →</span></a>
+                    <a href="examples/range-bars.html"><span class="btn ghost">Example</span></a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="section-title">Reference</div>
+    <div class="links">
+        <a class="link" href="docs/guide.html">
+            <span class="ic">📘</span>
+            <span><span class="t">Usage guide</span><br><span class="s">All attributes &amp; options</span></span>
+        </a>
+        <a class="link" href="examples/chart-selector.html">
+            <span class="ic">📊</span>
+            <span><span class="t">Comparison chart</span><br><span class="s">Radar with dropdown</span></span>
+        </a>
+        <a class="link" href="examples/range-bars.html">
+            <span class="ic">📶</span>
+            <span><span class="t">Range bar set</span><br><span class="s">Feel &amp; rider goals</span></span>
+        </a>
+        <a class="link" href="patrik-components.js">
+            <span class="ic">⚙️</span>
+            <span><span class="t">patrik-components.js</span><br><span class="s">The shared render script</span></span>
+        </a>
+    </div>
+
+</div>
+
+<footer class="foot">Patrik Components — internal section builder · scriptless HTML, one shared render script.</footer>
+
+<script src="patrik-components.js"></script>
+</body>
+</html>

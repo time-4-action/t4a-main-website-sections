@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Range Bars Builder — Patrik Components</title>
+<link rel="stylesheet" href="builder.css">
+</head>
+<body>
+
+<header class="topbar">
+    <a class="home" href="../index.html">← All components</a>
+    <h1><span class="dot"></span> Range Bars Builder</h1>
+    <span class="spacer"></span>
+    <span class="badge">feel / rider goals</span>
+</header>
+
+<div class="builder">
+
+    <!-- ============ CONTROLS ============ -->
+    <div class="panel controls">
+
+        <div class="group">
+            <div class="group-head"><span class="num">1</span> Card wrapper</div>
+            <label class="checkbox-row">
+                <input type="checkbox" id="wrapEnabled" checked>
+                Wrap all bars in a grey card with a heading
+            </label>
+            <label class="field" id="headingField">
+                <span class="lbl">Heading</span>
+                <input type="text" id="heading" value="Feel">
+            </label>
+        </div>
+
+        <div class="group">
+            <div class="group-head"><span class="num">2</span> Bars</div>
+            <div id="barList"></div>
+            <button class="btn add" id="addBar">+ Add bar</button>
+        </div>
+
+    </div>
+
+    <!-- ============ PREVIEW + CODE ============ -->
+    <div class="stack">
+        <div class="panel">
+            <div class="head">
+                <h2>Live preview</h2>
+                <span class="spacer"></span>
+                <span class="muted">rendered by patrik-components.js</span>
+            </div>
+            <div class="preview-stage" id="stage"></div>
+        </div>
+
+        <div class="panel">
+            <div class="head">
+                <h2>HTML snippet</h2>
+                <span class="spacer"></span>
+                <span class="muted">paste into your page</span>
+            </div>
+            <div class="code-wrap">
+                <button class="copy-btn" id="copyBtn">⧉ Copy</button>
+                <pre id="code"></pre>
+            </div>
+        </div>
+
+        <p class="tip">A range bar shows a <b>band</b> between two poles (or across labelled stops). Load <code>patrik-components.js</code> once per page — it renders every <code>.patrik-range-bar</code> automatically.</p>
+    </div>
+
+</div>
+
+<script src="../patrik-components.js"></script>
+<script>
+(function(){
+    "use strict";
+
+    const DEF_RANGE = "#b4ff64";
+
+    /* ---------- state ---------- */
+    const state = {
+        wrap:true,
+        heading:"Feel",
+        bars:[
+            { mode:"two", title:"Power delivery", left:"Direct", right:"Smooth",
+              min:25, max:62, marker:false, value:50, range:DEF_RANGE,
+              scale:"Entry,Intermediate,Advanced,Pro", scaleIndex:true },
+            { mode:"two", title:"Center of effort", left:"Backhanded", right:"Fronthanded",
+              min:45, max:80, marker:false, value:50, range:DEF_RANGE,
+              scale:"Entry,Intermediate,Advanced,Pro", scaleIndex:true }
+        ]
+    };
+
+    /* ---------- helpers ---------- */
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+    /* ---------- code generation ---------- */
+    function buildBar(bar, pad){
+        const A = [];
+        const push = (name,val) => A.push(`${pad}     ${name}="${esc(val)}"`);
+        if (bar.title) push("data-title", bar.title);
+
+        if (bar.mode==="two"){
+            if (bar.left)  push("data-left",  bar.left);
+            if (bar.right) push("data-right", bar.right);
+        } else {
+            push("data-scale", bar.scale);
+            if (bar.scaleIndex) push("data-scale-index", "true");
+        }
+        push("data-min", bar.min);
+        push("data-max", bar.max);
+        if (bar.marker) push("data-value", bar.value);
+        if (bar.range && bar.range.toLowerCase()!==DEF_RANGE) push("data-range", bar.range);
+
+        // fold the trailing "> onto the last attribute line, close on next line
+        const last = A.pop() + ">";
+        return `${pad}<div class="patrik-range-bar"\n${A.join("\n")}${A.length?"\n":""}${last}\n${pad}</div>`;
+    }
+
+    function buildMarkup(){
+        const pad = state.wrap ? "    " : "";
+        const bars = state.bars.map(b=>buildBar(b, pad)).join("\n\n");
+        if (!state.wrap) return bars;
+        let out = `<div style="background-color:#efefef; padding:24px; border-radius:10px; font-family:sans-serif; max-width:550px; margin:30px auto;">\n`;
+        if (state.heading.trim())
+            out += `    <h2 style="color:#1a3a4a; margin-top:0; font-size:22px;">${esc(state.heading)}</h2>\n\n`;
+        out += bars + `\n</div>`;
+        return out;
+    }
+
+    function fullCode(){
+        return buildMarkup() +
+            `\n\n<!-- load once per page, near the end of <body> -->\n<script src="patrik-components.js"><\/script>`;
+    }
+
+    /* ---------- syntax highlight ---------- */
+    function highlight(raw){
+        return raw.split(/(<!--[\s\S]*?-->)/g).map(p=>{
+            if (p.slice(0,4)==="<!--") return `<span class="cmt">${esc(p)}</span>`;
+            let s = esc(p);
+            s = s.replace(/([\w-]+)=(&quot;[\s\S]*?&quot;)/g,'<span class="attr">$1</span>=<span class="val">$2</span>');
+            s = s.replace(/(&lt;\/?)([\w.-]+)/g,'$1<span class="tag">$2</span>');
+            return s;
+        }).join("");
+    }
+
+    /* ---------- outputs ---------- */
+    function updateOutput(){
+        $("code").innerHTML = highlight(fullCode());
+        const stage = $("stage");
+        stage.innerHTML = buildMarkup();
+        if (window.PatrikComponents) window.PatrikComponents.render(stage);
+    }
+
+    /* ---------- controls ---------- */
+    function field(labelText, node){
+        const l = document.createElement("label");
+        l.className = "field";
+        const s = document.createElement("span"); s.className="lbl"; s.innerHTML = labelText;
+        l.append(s, node);
+        return l;
+    }
+    function textInput(value, ph, on){
+        const i = document.createElement("input");
+        i.type="text"; i.value=value||""; if(ph) i.placeholder=ph;
+        i.addEventListener("input", ()=>on(i.value));
+        return i;
+    }
+    function numInput(value, on){
+        const i = document.createElement("input");
+        i.type="number"; i.value=value;
+        i.addEventListener("input", ()=>on(i.value===""?"":Number(i.value)));
+        return i;
+    }
+
+    function renderBars(){
+        const box = $("barList");
+        box.innerHTML = "";
+        state.bars.forEach((bar, bi)=>{
+            const card = document.createElement("div");
+            card.className = "card-item";
+
+            // header
+            const head = document.createElement("div");
+            head.className = "card-head";
+            const tag = document.createElement("span"); tag.textContent = "Bar "+(bi+1);
+            const sp = document.createElement("span"); sp.className="spacer";
+            head.append(tag, sp);
+            if (state.bars.length>1){
+                const del = document.createElement("button");
+                del.className="icon-btn"; del.textContent="×"; del.title="Remove bar";
+                del.addEventListener("click", ()=>{ state.bars.splice(bi,1); renderBars(); updateOutput(); });
+                head.appendChild(del);
+            }
+            card.appendChild(head);
+
+            // mode toggle
+            const seg = document.createElement("div");
+            seg.className = "segmented";
+            seg.style.marginBottom = "12px";
+            [["two","Two-pole"],["scale","Scale"]].forEach(([m,txt])=>{
+                const b = document.createElement("button");
+                b.textContent = txt;
+                if (bar.mode===m) b.classList.add("active");
+                b.addEventListener("click", ()=>{ bar.mode=m; renderBars(); updateOutput(); });
+                seg.appendChild(b);
+            });
+            card.appendChild(seg);
+
+            // title
+            card.appendChild(field("Title", textInput(bar.title, "e.g. Power delivery", v=>{ bar.title=v; updateOutput(); })));
+
+            if (bar.mode==="two"){
+                const grid = document.createElement("div"); grid.className="inline-2";
+                grid.appendChild(field("Left label", textInput(bar.left,"Direct", v=>{bar.left=v; updateOutput();})));
+                grid.appendChild(field("Right label", textInput(bar.right,"Smooth", v=>{bar.right=v; updateOutput();})));
+                card.appendChild(grid);
+
+                const grid2 = document.createElement("div"); grid2.className="inline-2";
+                grid2.appendChild(field('Band start <span class="hint">(0–100%)</span>', numInput(bar.min, v=>{bar.min=v; updateOutput();})));
+                grid2.appendChild(field('Band end <span class="hint">(0–100%)</span>', numInput(bar.max, v=>{bar.max=v; updateOutput();})));
+                card.appendChild(grid2);
+            } else {
+                card.appendChild(field('Stop labels <span class="hint">(comma-separated)</span>',
+                    textInput(bar.scale, "Entry,Intermediate,Advanced,Pro", v=>{bar.scale=v; updateOutput();})));
+
+                const cb = document.createElement("label");
+                cb.className="checkbox-row";
+                const c = document.createElement("input"); c.type="checkbox"; c.checked=bar.scaleIndex;
+                c.addEventListener("change", ()=>{ bar.scaleIndex=c.checked; renderBars(); updateOutput(); });
+                cb.append(c, document.createTextNode("Min / max are stop indexes (0-based)"));
+                card.appendChild(cb);
+
+                const hintUnit = bar.scaleIndex ? "stop #" : "0–100%";
+                const grid2 = document.createElement("div"); grid2.className="inline-2";
+                grid2.appendChild(field(`Band start <span class="hint">(${hintUnit})</span>`, numInput(bar.min, v=>{bar.min=v; updateOutput();})));
+                grid2.appendChild(field(`Band end <span class="hint">(${hintUnit})</span>`, numInput(bar.max, v=>{bar.max=v; updateOutput();})));
+                card.appendChild(grid2);
+            }
+
+            // marker
+            const mk = document.createElement("label");
+            mk.className="checkbox-row";
+            const mkc = document.createElement("input"); mkc.type="checkbox"; mkc.checked=bar.marker;
+            mkc.addEventListener("change", ()=>{ bar.marker=mkc.checked; renderBars(); updateOutput(); });
+            mk.append(mkc, document.createTextNode("Add a single marker line"));
+            card.appendChild(mk);
+            if (bar.marker){
+                const wrap = document.createElement("div"); wrap.className="slider-row";
+                const nm=document.createElement("span"); nm.className="name"; nm.textContent="Marker";
+                const rng=document.createElement("input"); rng.type="range"; rng.min="0"; rng.max="100"; rng.value=bar.value;
+                const val=document.createElement("span"); val.className="val"; val.textContent=bar.value;
+                rng.addEventListener("input", ()=>{ bar.value=Number(rng.value); val.textContent=rng.value; updateOutput(); });
+                wrap.append(nm,rng,val);
+                card.appendChild(wrap);
+            }
+
+            // band colour
+            const cf = document.createElement("div"); cf.className="color-field"; cf.style.marginTop="4px";
+            const pick=document.createElement("input"); pick.type="color"; pick.value=bar.range;
+            pick.addEventListener("input", ()=>{ bar.range=pick.value; updateOutput(); });
+            const lbl=document.createElement("span"); lbl.className="cf-lbl"; lbl.textContent="Band colour";
+            const reset=document.createElement("button"); reset.className="reset"; reset.textContent="reset";
+            reset.addEventListener("click", ()=>{ bar.range=DEF_RANGE; renderBars(); updateOutput(); });
+            cf.append(pick,lbl,reset);
+            card.appendChild(cf);
+
+            box.appendChild(card);
+        });
+    }
+
+    /* ---------- static wiring ---------- */
+    $("wrapEnabled").addEventListener("change", e=>{
+        state.wrap = e.target.checked;
+        $("headingField").style.display = state.wrap ? "" : "none";
+        updateOutput();
+    });
+    $("heading").addEventListener("input", e=>{ state.heading=e.target.value; updateOutput(); });
+
+    $("addBar").addEventListener("click", ()=>{
+        state.bars.push({ mode:"two", title:"New bar", left:"Left", right:"Right",
+            min:20, max:70, marker:false, value:50, range:DEF_RANGE,
+            scale:"Entry,Intermediate,Advanced,Pro", scaleIndex:true });
+        renderBars(); updateOutput();
+    });
+
+    $("copyBtn").addEventListener("click", ()=>{
+        navigator.clipboard.writeText(fullCode()).then(()=>{
+            const b=$("copyBtn"); b.classList.add("copied"); b.textContent="✓ Copied";
+            setTimeout(()=>{ b.classList.remove("copied"); b.textContent="⧉ Copy"; }, 1400);
+        });
+    });
+
+    /* ---------- init ---------- */
+    renderBars();
+    updateOutput();
+})();
+</script>
+</body>
+</html>

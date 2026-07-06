@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar Chart Builder — Patrik Components</title>
+<link rel="stylesheet" href="builder.css">
+</head>
+<body>
+
+<header class="topbar">
+    <a class="home" href="../index.html">← All components</a>
+    <h1><span class="dot"></span> Radar Chart Builder</h1>
+    <span class="spacer"></span>
+    <span class="badge">performance octagon</span>
+</header>
+
+<div class="builder">
+
+    <!-- ============ CONTROLS ============ -->
+    <div class="panel controls">
+
+        <div class="group">
+            <div class="group-head"><span class="num">1</span> Card wrapper</div>
+            <label class="checkbox-row">
+                <input type="checkbox" id="wrapEnabled" checked>
+                Wrap in a grey card with a heading
+            </label>
+            <label class="field" id="headingField">
+                <span class="lbl">Heading</span>
+                <input type="text" id="heading" value="Programme">
+            </label>
+        </div>
+
+        <div class="group">
+            <div class="group-head"><span class="num">2</span> Mode</div>
+            <div class="segmented" id="modeToggle">
+                <button data-mode="single" class="active">Single dataset</button>
+                <button data-mode="compare">Comparison (dropdown)</button>
+            </div>
+        </div>
+
+        <div class="group">
+            <div class="group-head"><span class="num">3</span> Axes</div>
+            <div id="axisList"></div>
+            <button class="btn add" id="addAxis">+ Add axis</button>
+        </div>
+
+        <div class="group" id="valuesGroup">
+            <div class="group-head"><span class="num">4</span> <span id="valuesTitle">Values</span></div>
+            <div id="valuesArea"></div>
+            <button class="btn add" id="addDataset" style="display:none;">+ Add dataset</button>
+        </div>
+
+        <div class="group">
+            <div class="group-head"><span class="num">5</span> Colours <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+            <div class="colors-grid" id="colorsGrid"></div>
+            <label class="field" style="margin-top:14px;">
+                <span class="lbl">Fill opacity <span class="hint" id="opacityVal">0.60</span></span>
+                <input type="range" id="fillOpacity" min="0" max="1" step="0.05" value="0.6" style="width:100%;accent-color:var(--lime-dark);">
+            </label>
+            <p class="subnote">Only colours you change are written into the snippet. Everything else uses the component defaults.</p>
+        </div>
+
+    </div>
+
+    <!-- ============ PREVIEW + CODE ============ -->
+    <div class="stack">
+        <div class="panel">
+            <div class="head">
+                <h2>Live preview</h2>
+                <span class="spacer"></span>
+                <span class="muted">rendered by patrik-components.js</span>
+            </div>
+            <div class="preview-stage" id="stage"></div>
+        </div>
+
+        <div class="panel">
+            <div class="head">
+                <h2>HTML snippet</h2>
+                <span class="spacer"></span>
+                <span class="muted">paste into your page</span>
+            </div>
+            <div class="code-wrap">
+                <button class="copy-btn" id="copyBtn">⧉ Copy</button>
+                <pre id="code"></pre>
+            </div>
+        </div>
+
+        <p class="tip">Load <code>patrik-components.js</code> once per page (near the end of <code>&lt;body&gt;</code>). It auto-renders every component on the page — no inline JavaScript needed.</p>
+    </div>
+
+</div>
+
+<!-- the actual component renderer, used to power the live preview -->
+<script src="../patrik-components.js"></script>
+<script>
+(function(){
+    "use strict";
+
+    /* ---------- defaults ---------- */
+    const DEF = {
+        fill:"#b4ff64", fillOpacity:0.6,
+        stroke:"#b4ff64", point:"#1a3a4a",
+        grid:"#b0c4cf", axisColor:"#b0c4cf", labelColor:"#1a3a4a"
+    };
+    const COLOR_FIELDS = [
+        { key:"fill",       attr:"data-fill",        label:"Fill" },
+        { key:"stroke",     attr:"data-stroke",      label:"Outline" },
+        { key:"point",      attr:"data-point",       label:"Points" },
+        { key:"grid",       attr:"data-grid",        label:"Grid" },
+        { key:"axisColor",  attr:"data-axis-color",  label:"Axis lines" },
+        { key:"labelColor", attr:"data-label-color", label:"Labels" }
+    ];
+
+    /* ---------- state ---------- */
+    const state = {
+        wrap:true,
+        heading:"Programme",
+        mode:"single",
+        axes:["LIGHTWIND","FREERIDE","FOIL","FREEFLY","WAVE","SURF","RACING","FREESTYLE"],
+        values:[100,90,70,85,95,60,80,75],
+        datasets:[
+            { name:"4Wave FLOW HD",  values:[100,85,70,100,40,100,90,100] },
+            { name:"4Wave FLASH HD", values:[90,100,95,80,75,90,100,90] }
+        ],
+        colors:{ fill:DEF.fill, fillOpacity:DEF.fillOpacity, stroke:DEF.stroke,
+                 point:DEF.point, grid:DEF.grid, axisColor:DEF.axisColor, labelColor:DEF.labelColor }
+    };
+
+    /* ---------- helpers ---------- */
+    const $ = id => document.getElementById(id);
+    const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    function hexToRgba(hex, a){
+        const h = hex.replace("#","");
+        const n = h.length===3 ? h.split("").map(c=>c+c).join("") : h;
+        const r=parseInt(n.slice(0,2),16), g=parseInt(n.slice(2,4),16), b=parseInt(n.slice(4,6),16);
+        return `rgba(${r},${g},${b},${a})`;
+    }
+    function fitValues(arr){ // keep a values array aligned to axes length
+        const out = state.axes.map((_,i)=> arr[i]!=null ? arr[i] : 50);
+        return out;
+    }
+
+    /* ---------- code generation ---------- */
+    function colorAttrs(){
+        const c = state.colors, out = [];
+        if (c.fill.toLowerCase()!==DEF.fill || Number(c.fillOpacity)!==DEF.fillOpacity)
+            out.push(["data-fill", hexToRgba(c.fill, Number(c.fillOpacity))]);
+        if (c.stroke.toLowerCase()!==DEF.stroke)         out.push(["data-stroke", c.stroke]);
+        if (c.point.toLowerCase()!==DEF.point)           out.push(["data-point", c.point]);
+        if (c.grid.toLowerCase()!==DEF.grid)             out.push(["data-grid", c.grid]);
+        if (c.axisColor.toLowerCase()!==DEF.axisColor)   out.push(["data-axis-color", c.axisColor]);
+        if (c.labelColor.toLowerCase()!==DEF.labelColor) out.push(["data-label-color", c.labelColor]);
+        return out;
+    }
+
+    function buildChart(pad){
+        const axes = state.axes.join(",");
+        const extra = colorAttrs();
+        const L = [];
+        L.push(`${pad}<div class="patrik-radar-chart"`);
+        L.push(`${pad}     data-axes="${axes}"`);
+
+        if (state.mode==="single"){
+            let last = `${pad}     data-values="${fitValues(state.values).join(",")}"`;
+            extra.forEach(([a,v]) => last += `\n${pad}     ${a}="${v}"`);
+            L.push(last + ">");
+            L.push(`${pad}</div>`);
+        } else {
+            let opener = `${pad}     ` + extra.map(([a,v])=>`${a}="${v}"`).join(`\n${pad}     `);
+            if (extra.length) L.push(opener + ">"); else L[L.length-1] += ">";
+            L.push(`${pad}    <div style="margin-bottom:20px;">`);
+            L.push(`${pad}        <label style="font-size:13px;color:#1a3a4a;font-weight:bold;margin-right:8px;">Compare models:</label>`);
+            L.push(`${pad}        <select class="patrik-radar-select" style="padding:6px 12px;font-size:14px;border-radius:5px;border:1px solid #b0c4cf;color:#1a3a4a;background:#fff;font-weight:bold;cursor:pointer;">`);
+            state.datasets.forEach(ds=>{
+                L.push(`${pad}            <option value="${fitValues(ds.values).join(",")}">${esc(ds.name)}</option>`);
+            });
+            L.push(`${pad}        </select>`);
+            L.push(`${pad}    </div>`);
+            L.push(`${pad}</div>`);
+        }
+        return L.join("\n");
+    }
+
+    function buildMarkup(){
+        if (!state.wrap) return buildChart("");
+        const pad = "    ";
+        let out = `<div style="background-color:#efefef; padding:20px; border-radius:10px; font-family:sans-serif; max-width:550px; margin:30px auto;">\n`;
+        if (state.heading.trim())
+            out += `${pad}<h2 style="color:#1a3a4a; margin-top:0; font-size:22px;">${esc(state.heading)}</h2>\n\n`;
+        out += buildChart(pad) + `\n</div>`;
+        return out;
+    }
+
+    function fullCode(){
+        return buildMarkup() +
+            `\n\n<!-- load once per page, near the end of <body> -->\n<script src="patrik-components.js"><\/script>`;
+    }
+
+    /* ---------- syntax highlight ---------- */
+    function highlight(raw){
+        return raw.split(/(<!--[\s\S]*?-->)/g).map(p=>{
+            if (p.slice(0,4)==="<!--") return `<span class="cmt">${esc(p)}</span>`;
+            let s = esc(p);
+            s = s.replace(/([\w-]+)=(&quot;[\s\S]*?&quot;)/g,'<span class="attr">$1</span>=<span class="val">$2</span>');
+            s = s.replace(/(&lt;\/?)([\w.-]+)/g,'$1<span class="tag">$2</span>');
+            return s;
+        }).join("");
+    }
+
+    /* ---------- outputs ---------- */
+    function updateOutput(){
+        $("code").innerHTML = highlight(fullCode());
+        const stage = $("stage");
+        stage.innerHTML = buildMarkup();
+        if (window.PatrikComponents) window.PatrikComponents.render(stage);
+    }
+
+    /* ---------- controls: axes ---------- */
+    function renderAxes(){
+        const box = $("axisList");
+        box.innerHTML = "";
+        state.axes.forEach((name,i)=>{
+            const row = document.createElement("div");
+            row.className = "row";
+            const inp = document.createElement("input");
+            inp.type = "text"; inp.value = name; inp.placeholder = "Axis label";
+            inp.addEventListener("input", ()=>{ state.axes[i]=inp.value; renderValues(); updateOutput(); });
+            const del = document.createElement("button");
+            del.className = "icon-btn"; del.textContent = "×"; del.title = "Remove axis";
+            del.addEventListener("click", ()=>{
+                if (state.axes.length<=3){ del.classList.add("shake"); return; }
+                state.axes.splice(i,1);
+                state.values.splice(i,1);
+                state.datasets.forEach(d=>d.values.splice(i,1));
+                renderAxes(); renderValues(); updateOutput();
+            });
+            row.append(inp, del);
+            box.appendChild(row);
+        });
+    }
+
+    /* ---------- controls: values / datasets ---------- */
+    function slider(name, value, onInput){
+        const row = document.createElement("div");
+        row.className = "slider-row";
+        const nm = document.createElement("span"); nm.className="name"; nm.textContent = name||"—";
+        const rng = document.createElement("input");
+        rng.type="range"; rng.min="0"; rng.max="100"; rng.value=value;
+        const val = document.createElement("span"); val.className="val"; val.textContent = value;
+        rng.addEventListener("input", ()=>{ val.textContent = rng.value; onInput(Number(rng.value)); });
+        row.append(nm, rng, val);
+        return row;
+    }
+
+    function renderValues(){
+        const area = $("valuesArea");
+        area.innerHTML = "";
+        if (state.mode==="single"){
+            $("addDataset").style.display = "none";
+            $("valuesTitle").textContent = "Values";
+            state.values = fitValues(state.values);
+            state.axes.forEach((ax,i)=>{
+                area.appendChild( slider(ax, state.values[i], v=>{ state.values[i]=v; updateOutput(); }) );
+            });
+        } else {
+            $("addDataset").style.display = "";
+            $("valuesTitle").textContent = "Datasets";
+            state.datasets.forEach((ds,di)=>{
+                ds.values = ds.values.length===state.axes.length ? ds.values : state.axes.map((_,i)=>ds.values[i]!=null?ds.values[i]:50);
+                const card = document.createElement("div");
+                card.className = "card-item";
+                const head = document.createElement("div");
+                head.className = "card-head";
+                const tag = document.createElement("span"); tag.textContent = "Dataset "+(di+1);
+                const sp = document.createElement("span"); sp.className="spacer";
+                head.append(tag, sp);
+                if (state.datasets.length>1){
+                    const del = document.createElement("button");
+                    del.className="icon-btn"; del.textContent="×"; del.title="Remove dataset";
+                    del.addEventListener("click", ()=>{ state.datasets.splice(di,1); renderValues(); updateOutput(); });
+                    head.appendChild(del);
+                }
+                const nameInp = document.createElement("input");
+                nameInp.type="text"; nameInp.value=ds.name; nameInp.placeholder="Dataset name (dropdown label)";
+                nameInp.style.marginBottom="10px";
+                nameInp.addEventListener("input", ()=>{ ds.name=nameInp.value; updateOutput(); });
+                card.append(head, nameInp);
+                state.axes.forEach((ax,i)=>{
+                    card.appendChild( slider(ax, ds.values[i], v=>{ ds.values[i]=v; updateOutput(); }) );
+                });
+                area.appendChild(card);
+            });
+        }
+    }
+
+    /* ---------- controls: colours ---------- */
+    function renderColors(){
+        const grid = $("colorsGrid");
+        grid.innerHTML = "";
+        COLOR_FIELDS.forEach(f=>{
+            const wrap = document.createElement("div");
+            wrap.className="color-field";
+            const pick = document.createElement("input");
+            pick.type="color"; pick.value = state.colors[f.key];
+            const lbl = document.createElement("span"); lbl.className="cf-lbl"; lbl.textContent = f.label;
+            pick.addEventListener("input", ()=>{ state.colors[f.key]=pick.value; updateOutput(); });
+            wrap.append(pick, lbl);
+            grid.appendChild(wrap);
+        });
+    }
+
+    /* ---------- wire up static controls ---------- */
+    $("wrapEnabled").addEventListener("change", e=>{
+        state.wrap = e.target.checked;
+        $("headingField").style.display = state.wrap ? "" : "none";
+        updateOutput();
+    });
+    $("heading").addEventListener("input", e=>{ state.heading=e.target.value; updateOutput(); });
+
+    document.querySelectorAll("#modeToggle button").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+            document.querySelectorAll("#modeToggle button").forEach(b=>b.classList.remove("active"));
+            btn.classList.add("active");
+            state.mode = btn.dataset.mode;
+            renderValues(); updateOutput();
+        });
+    });
+
+    $("addAxis").addEventListener("click", ()=>{
+        state.axes.push("NEW");
+        state.values.push(50);
+        state.datasets.forEach(d=>d.values.push(50));
+        renderAxes(); renderValues(); updateOutput();
+    });
+
+    $("addDataset").addEventListener("click", ()=>{
+        state.datasets.push({ name:"New model", values:state.axes.map(()=>60) });
+        renderValues(); updateOutput();
+    });
+
+    $("fillOpacity").addEventListener("input", e=>{
+        state.colors.fillOpacity = e.target.value;
+        $("opacityVal").textContent = Number(e.target.value).toFixed(2);
+        updateOutput();
+    });
+
+    $("copyBtn").addEventListener("click", ()=>{
+        navigator.clipboard.writeText(fullCode()).then(()=>{
+            const b = $("copyBtn");
+            b.classList.add("copied"); b.textContent = "✓ Copied";
+            setTimeout(()=>{ b.classList.remove("copied"); b.textContent="⧉ Copy"; }, 1400);
+        });
+    });
+
+    /* ---------- init ---------- */
+    renderAxes();
+    renderValues();
+    renderColors();
+    updateOutput();
+})();
+</script>
+</body>
+</html>
